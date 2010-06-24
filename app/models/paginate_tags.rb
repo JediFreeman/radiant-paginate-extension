@@ -53,7 +53,7 @@ module PaginateTags
     excludes = PagePart.find(
       :all,
       :joins => :page,
-      :conditions => ["name in (?) AND pages.parent_id in (?)", excludes, parents],
+      :conditions => ["name in (?) AND pages.parent_id in (?)", excludes, parents]
     ).collect { |part| part.page_id }
 
     paginated_children = Page.paginate(options.merge(
