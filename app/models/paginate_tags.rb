@@ -36,7 +36,7 @@ module PaginateTags
     
     *Usage:*
     
-    <pre><code><r:paginate [per_page="10"] [order="asc|desc"] [by="attribute"]>
+    <pre><code><r:paginate [per_page="10"] [order="asc|desc"] [by="attribute"] [excludes="part-name[,page-part]"]>
       ...
       <r:each>...</r:each>
       ...
@@ -48,8 +48,19 @@ module PaginateTags
     
     parents = tag.locals.parent_ids || paginate_find_parent_pages(tag)
     options = paginate_find_options(tag)
-    
-    paginated_children = Page.paginate(options.merge(:conditions => ["pages.parent_id in (?) AND virtual = ? and status_id = ?", parents,false,100]))
+    excludes = tag.attr['excludes'].blank? ? Array.new : tag.attr['excludes'].split(',').to_a
+
+    excludes = PagePart.find(
+      :all,
+      :joins => :page,
+      :conditions => ["name in (?) AND pages.parent_id in (?)", excludes, parents],
+    ).collect { |part| part.page_id }
+
+    paginated_children = Page.paginate(options.merge(
+      :conditions => ["pages.parent_id in (?) AND pages.id not in (?)
+                       AND virtual = ? and status_id = ? ", parents, excludes, false, 100])
+    )
+
     tag.locals.paginated_children = paginated_children
     
     tag.expand
