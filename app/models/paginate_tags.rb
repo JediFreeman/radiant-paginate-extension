@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 module PaginateTags
   include Radiant::Taggable
   include WillPaginate::ViewHelpers
@@ -12,7 +14,11 @@ module PaginateTags
     def page_link(page, text, attributes = {})
       attributes = tag_options(attributes)
       @paginate_url_route = @paginate_url_route.blank? ? PaginateExtension::UrlCache : @paginate_url_route
-      %Q{<a href="#{@tag.locals.page.url}#{@paginate_url_route}#{page}"#{attributes}>#{text}</a>}
+      pagination_url = "#{@tag.locals.page.url}#{@paginate_url_route}#{page}"
+      if ( !@options[:first_page_url].nil? and !@options[:first_page_url].empty? ) and page == 1
+        pagination_url = "#{@options[:first_page_url]}"
+      end 
+      %Q{<a href="#{pagination_url}"#{attributes}>#{text}</a>}
     end
     
     def gap_marker
@@ -99,6 +105,8 @@ module PaginateTags
     * outer_window - how many links are around the first and the last page (default: 1)
     * separator - string separator for page HTML elements (default: single space)
     * page_links - when false, only previous/next links are rendered (default: true)
+    * show_endcap_link - when false, does not show next link on last page or prev link on first page (default: true)
+    * first_page_url - when set, overrides the url of the pagination control for the first page link (for example, to send to homepage on page 1) 
     
     *Usage:*
     
@@ -107,7 +115,9 @@ module PaginateTags
       [prev_label="&laquo; Previous"] 
       [next_label="Next &raquo;"] 
       [inner_window="4"] [outer_window="1"]
-      [separator=" "] [page_links="true"]/>
+      [separator=" "] [page_links="true"]
+      [show_endcap_link="true"] [first_page_url=""]
+      />
     </r:paginate>
     </code></pre>
   }
@@ -116,11 +126,20 @@ module PaginateTags
     
     options = {}
     
-    [:id, :class, :prev_label, :next_label, :inner_window, :outer_window, :separator].each do |a|
+    [:id, :class, :prev_label, :next_label, :inner_window, :outer_window, :separator, :first_page_url].each do |a|
       options[a] = tag.attr[a.to_s] unless tag.attr[a.to_s].blank?
     end
     options[:page_links] = false if 'false' == tag.attr['page_links']
     options[:container]  = false #if 'false' == tag.attr['container']
+    
+    show_endcap_link = true
+    if (!tag.attr["show_endcap_link"].nil? and !tag.attr["show_endcap_link"].empty?)
+      show_endcap_link = false if 'false' == tag.attr['show_endcap_link']
+    end
+    if !show_endcap_link
+      options[:next_label] = '' if tag.locals.paginated_children.next_page.nil?
+      options[:prev_label] = '' if tag.locals.paginated_children.previous_page.nil?
+    end
     
     will_paginate tag.locals.paginated_children, options.merge(:renderer => renderer)
   end
@@ -144,7 +163,7 @@ module PaginateTags
       
       options = {}
       
-      options[:page] = tag.attr['page'] || @request.path[/^#{Regexp.quote(tag.locals.page.url)}#{Regexp.quote(PaginateExtension::UrlCache)}(\d+)\/?$/, 1]
+      options[:page] = tag.attr['page'] || request.path[/^#{Regexp.quote(tag.locals.page.url)}#{Regexp.quote(PaginateExtension::UrlCache)}(\d+)\/?$/, 1]
 
       options[:per_page] = tag.attr['per_page'] || 10
       
