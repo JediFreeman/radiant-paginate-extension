@@ -34,9 +34,9 @@ Then install the [Radiant Paginate Extension][rpe]:
 
 Configuration
 ---
-Because the archived pages urls may not be processed properly, it is recommended to set `Radiant::Config['paginate.url_route']` to something like `page-`
+Because the archived pages urls may not be processed properly, it is recommended to set `Radiant::Config['pagination.url_route']` to something like `page-`
 
-    Radiant['paginate.url_route'] = 'page-'
+    Radiant['pagination.url_route'] = 'page-'
 
 Usage
 ---

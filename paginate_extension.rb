@@ -4,10 +4,9 @@ class PaginateExtension < Radiant::Extension
   url "http://blog.aissac.ro/radiant/paginate-extension/"
   
   def activate 
-    if Radiant::Config.table_exists?
-      Radiant::Config['paginate.url_route'] = '' unless Radiant::Config['paginate.url_route']
-      PaginateExtension.const_set('UrlCache', Radiant::Config['paginate.url_route'])
-    end
+    Radiant::Config['pagination.url_route'] ||= 'page/'
+    PaginateExtension.const_set('UrlCache', Radiant::Config['pagination.url_route'])
+
     Page.send(:include, PaginateTags)
     Page.send(:include, PaginatePageExtensions)
   end
